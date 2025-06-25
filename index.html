@@ -485,6 +485,7 @@
         }
 
 
+        
 
         // function showSubQuestions(option) {
         //     if (!option.subQuestions || option.subQuestions.length === 0) {
@@ -624,7 +625,10 @@
         //     chatBody.appendChild(subWrapper);
         //     chatBody.scrollTop = chatBody.scrollHeight;
         // }
-            function showSubQuestions(option) {
+        function showSubQuestions(option, history = []) {
+            document.querySelectorAll(".option-buttons").forEach(el => el.remove());
+
+            
                 if (!option.subQuestions || option.subQuestions.length === 0) {
                     showSubSupport();
                     return;
@@ -642,16 +646,16 @@
                         appendMessage(sub.question, 'user');
                         subWrapper.remove();
 
-                        // ✅ Recursive check for nested subQuestions
+                        // ✅ Recursive support for nested sub-questions
                         if (sub.subQuestions && sub.subQuestions.length > 0) {
-                            showSubQuestions(sub); // 🔁 show next level
+                            showSubQuestions(sub, [ ...history, option ]); // 🧠 pass updated history stack
                             return;
                         }
 
                         showTyping(() => {
                             appendMessage(sub.answer, 'bot');
 
-                            // ✅ Handle custom buttons for follow-up
+                            // 🔁 Follow-up logic (your original handlers)
                             if (sub.id === "payment_failed") {
                                 const followUpWrapper = document.createElement("div");
                                 followUpWrapper.className = "option-buttons";
@@ -735,7 +739,7 @@
                                 return;
                             }
 
-                            // ✅ Generic follow-up buttons (e.g., refund buttons)
+                            // ✅ Generic follow-up buttons
                             if (sub.followUpButtons) {
                                 const followUpWrapper = document.createElement("div");
                                 followUpWrapper.className = "option-buttons";
@@ -758,7 +762,7 @@
                                 return;
                             }
 
-                            // Default support fallback
+                            // Default fallback
                             showSubSupport();
                         });
                     };
@@ -766,7 +770,34 @@
                     subWrapper.appendChild(btn);
                 });
 
+                // 🔙 Back & 🏠 Menu Buttons
+                const navWrapper = document.createElement("div");
+                navWrapper.className = "option-buttons";
+
+                if (history.length > 0) {
+                    const backBtn = document.createElement("button");
+                    backBtn.className = "option-btn";
+                    backBtn.innerText = "🔙 Back";
+                    backBtn.onclick = () => {
+                        subWrapper.remove();
+                        showSubQuestions(history[ history.length - 1 ], history.slice(0, -1));
+                    };
+                    navWrapper.appendChild(backBtn);
+                }
+
+                const menuBtn = document.createElement("button");
+                menuBtn.className = "option-btn";
+                menuBtn.innerText = "🏠 Main Menu";
+                menuBtn.onclick = () => {
+                    subWrapper.remove();
+                    navWrapper.remove();
+                    showOptions();
+                };
+
+                navWrapper.appendChild(menuBtn);
+
                 chatBody.appendChild(subWrapper);
+                chatBody.appendChild(navWrapper);
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
 
