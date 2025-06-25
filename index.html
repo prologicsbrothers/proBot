@@ -25,7 +25,38 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            position: relative;
         }
+
+/* ✅ Sticky nav at bottom */
+.chat-nav {
+    position: fixed;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    z-index: 99;
+    background: transparent;
+}
+
+.chat-nav button {
+    background-color: #fff;
+    color: #e84855;
+    font-weight: 600;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.chat-nav button:hover {
+    background-color: #f5f5f5;
+}
 
         .chat-header {
             background-color: #000;
@@ -63,27 +94,30 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px;
+            padding-bottom: 80px; /* ✅ To prevent overlap from fixed nav buttons */
+
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
 
         .chat-message {
-    max-width: 70%;
-    padding: 14px 16px;
-    border-radius: 16px;
-    font-size: 14.5px;
-    line-height: 1.5;
-    animation: fadeIn 0.25s ease-in-out;
-}
+            max-width: 70%;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 14.5px;
+            line-height: 1.5;
+            animation: fadeIn 0.25s ease-in-out;
+        }
 
-.bot-message {
-    align-self: flex-start;
-    background-color: #fff;
-    color: #111;
-    border-bottom-left-radius: 0;
-    max-width: 85%; /* ✅ Increased bot message width */
-}
+        .bot-message {
+            align-self: flex-start;
+            background-color: #fff;
+            color: #111;
+            border-bottom-left-radius: 0;
+            max-width: 85%;
+            /* ✅ Increased bot message width */
+        }
 
         .user-message {
             align-self: flex-end;
@@ -190,7 +224,7 @@
 </head>
 
 <body>
-    <div class="chat-wrapper">
+    <div class="chat-wrapper" id="chat-wrapper">
         <div class="chat-header">
             <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="Bot" />
             <div class="info">
@@ -198,181 +232,191 @@
                 <span class="status">Online</span>
             </div>
         </div>
+    
         <div class="chat-body" id="chat-body"></div>
-        <div class="chat-footer">
-            <input type="text" placeholder="Type your message... (Coming Soon)" disabled />
-            <button disabled>Send</button>
+    
+        <!-- Sticky footer buttons -->
+        <div class="chat-nav" id="fixedButtons">
+            <button id="backBtn">⬅️ Back</button>
+            <button id="menuBtn">🏠 Menu</button>
         </div>
     </div>
+    
     <script>
+
+let historyStack = [];
+    let currentOption = null;
+
         const chatBody = document.getElementById("chat-body");
 
         const options = [
-              
-                {
-                    id: "deposit_withdraw",
-                    question: "Withdrawal & Deposit 💰",
-                    answer: "Please select one of the following to proceed:",
-                    subQuestions: [
-                        {
-                            id: "deposit_problems",
-                            question: "📥 Deposit Problem",
-                            answer: "Choose your issue related to deposits:",
-                            subQuestions: [
+            {
+                id: "deposit_withdraw",
+                question: "Withdrawal & Deposit 💰",
+                answer: "Please select one of the following to proceed:",
+                subQuestions: [
+                    {
+                        id: "deposit_problems",
+                        question: "📥 Deposit Problem",
+                        answer: "Choose your issue related to deposits:",
+                        subQuestions: [
                             {
-                                    id: "no_payment_proof",
-                                    question: "I don’t have a payment proof",
-                                    answer: "Unfortunately, a valid payment screenshot is mandatory for manual verification.\n\nHere’s what you can do:\n- Open your UPI app or bank statement.\n- Take a screenshot showing the transaction amount, date/time, and transaction ID.\n\nIf you're unable to find this, contact your bank or UPI provider and request the transaction details or mini statement."
-                                },
-                                {
-                                    id: "payment_failed",
-                                    question: "Payment marked as Failed in ProQuZ",
-                                    answer: "We’re sorry to hear that your payment is showing as 'Failed' in the ProQuZ app.\n\n💡 Sometimes this happens due to:\n- Network timeout between bank & UPI\n- Delay in verification from server\n- Incorrect or partial transaction data\n\nIf the amount was **actually deducted from your UPI app**, we request you to re-verify the payment below."
-                                },
-                                {
-                                    id: "verify_button_disabled",
-                                    question: "Verify Payment button not responding",
-                                    answer: "If the 'Verify Payment' button is unresponsive, please check the following:\n\n- Ensure your internet connection is stable.\n- Make sure you're using the latest version of the ProQuZ app.\n- Try clearing the app cache from device settings.\n- Restart the app or reinstall it if needed.\n\nIf the button still doesn't work, please contact our support team for manual verification."
-                                },
-                                {
-                                    id: "payment_not_reflected",
-                                    question: "Payment made but amount not showing in wallet",
-                                    answer: "We're sorry to hear that your payment hasn't reflected yet. We completely understand how concerning this might be.\n\n💡 In most cases, UPI payments are credited within 5–10 minutes to your ProQuZ wallet.\n\n⏳ If it has been less than 10 minutes, we kindly request you to wait — the amount should appear shortly."
-                                },
-                              
-                                {
-                                    id: "screenshot_issue",
-                                    question: "Uploaded screenshot but payment still not verified",
-                                    answer: "For a successful manual verification:\n\n✅ Ensure your screenshot clearly shows:\n- Transaction ID or UTR number\n- Exact amount sent\n- Date & Time\n- Sender UPI ID\n\n⏳ Once uploaded, the verification process may take up to 5-10 minutes. Blurry or incomplete screenshots may lead to rejection. If your screenshot meets all criteria and it's still not verified, please try re-uploading it or contact support."
-                                }
-                               
-                            ]
-                        },
-                        {
-                            id: "withdraw_problems",
-                            question: "💸 Withdraw Problem",
-                            answer: "Choose your issue related to withdrawals:",
-                            subQuestions: [
-                                {
-                                    id: "not_received",
-                                    question: "I applied for withdrawal but haven't received money yet",
-                                    answer: "Withdrawals typically take 24–48 hours to complete. If your bank or UPI hasn't received it in this time, contact support."
-                                },
-                                {
-                                    id: "wrong_upi_entered",
-                                    question: "I entered wrong UPI ID by mistake",
-                                    answer: "Withdrawals sent to incorrect UPI IDs will fail. Please double-check before submitting again. If already submitted, wait for auto-refund."
-                                },
-                                {
-                                    id: "withdrawal_failed",
-                                    question: "My withdrawal was failed or returned",
-                                    answer: "This can happen if UPI ID is invalid, bank is not accepting, or KYC is incomplete. Check your info and retry after correcting."
-                                },
-                                {
-                                    id: "withdrawal_minimum_limit",
-                                    question: "What’s the minimum withdrawal amount?",
-                                    answer: "The minimum withdrawal limit is ₹50. You will only be able to request a withdrawal when your wallet balance crosses this amount."
-                                },
-                                {
-                                    id: "kyc_pending_withdrawal",
-                                    question: "Is KYC necessary for withdrawal?",
-                                    answer: "Yes, completing your KYC ensures that your identity is verified and prevents delays in processing your withdrawal."
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    id: "kyc",
-                    question: "KYC & Account Related 🆔",
-                    answer: "Facing issues with KYC or identity verification?",
-                    subQuestions: [
+                                id: "no_payment_proof",
+                                question: "I don’t have a payment proof",
+                                answer: "Unfortunately, a valid payment screenshot is mandatory for manual verification.\n\nHere’s what you can do:\n- Open your UPI app or bank statement.\n- Take a screenshot showing the transaction amount, date/time, and transaction ID.\n\nIf you're unable to find this, contact your bank or UPI provider and request the transaction details or mini statement."
+                            },
+                            {
+                                id: "payment_failed",
+                                question: "Payment marked as Failed in ProQuZ",
+                                answer: "We’re sorry to hear that your payment is showing as 'Failed' in the ProQuZ app.\n\n💡 Sometimes this happens due to:\n- Network timeout between bank & UPI\n- Delay in verification from server\n- Incorrect or partial transaction data\n\nIf the amount was **actually deducted from your UPI app**, we request you to re-verify the payment below."
+                            },
+                            {
+                                id: "verify_button_disabled",
+                                question: "Verify Payment button not responding",
+                                answer: "If the 'Verify Payment' button is unresponsive, please check the following:\n\n- Ensure your internet connection is stable.\n- Make sure you're using the latest version of the ProQuZ app.\n- Try clearing the app cache from device settings.\n- Restart the app or reinstall it if needed.\n\nIf the button still doesn't work, please contact our support team for manual verification."
+                            },
+                            {
+                                id: "payment_not_reflected",
+                                question: "Payment made but amount not showing in wallet",
+                                answer: "We're sorry to hear that your payment hasn't reflected yet. We completely understand how concerning this might be.\n\n💡 In most cases, UPI payments are credited within 5–10 minutes to your ProQuZ wallet.\n\n⏳ If it has been less than 10 minutes, we kindly request you to wait — the amount should appear shortly."
+                            },
+
+                            {
+                                id: "screenshot_issue",
+                                question: "Uploaded screenshot but payment still not verified",
+                                answer: "For a successful manual verification:\n\n✅ Ensure your screenshot clearly shows:\n- Transaction ID or UTR number\n- Exact amount sent\n- Date & Time\n- Sender UPI ID\n\n⏳ Once uploaded, the verification process may take up to 5-10 minutes. Blurry or incomplete screenshots may lead to rejection. If your screenshot meets all criteria and it's still not verified, please try re-uploading it or contact support."
+                            }
+
+                        ]
+                    },
+                    {
+                        id: "withdraw_problems",
+                        question: "💸 Withdraw Problem",
+                        answer: "Choose your issue related to withdrawals:",
+                        subQuestions: [
+                            {
+                                id: "not_received",
+                                question: "I applied for withdrawal but haven't received money yet",
+                                answer: "Withdrawals typically take 24–48 hours to complete. If your bank or UPI hasn't received it in this time, contact support."
+                            },
+                            {
+                                id: "wrong_upi_entered",
+                                question: "I entered wrong UPI ID by mistake",
+                                answer: "Withdrawals sent to incorrect UPI IDs will fail. Please double-check before submitting again. If already submitted, wait for auto-refund."
+                            },
+                            {
+                                id: "withdrawal_failed",
+                                question: "My withdrawal was failed or returned",
+                                answer: "This can happen if UPI ID is invalid, bank is not accepting, or KYC is incomplete. Check your info and retry after correcting."
+                            },
+                            {
+                                id: "withdrawal_minimum_limit",
+                                question: "What’s the minimum withdrawal amount?",
+                                answer: "The minimum withdrawal limit is ₹50. You will only be able to request a withdrawal when your wallet balance crosses this amount."
+                            },
+                            {
+                                id: "kyc_pending_withdrawal",
+                                question: "Is KYC necessary for withdrawal?",
+                                answer: "Yes, completing your KYC ensures that your identity is verified and prevents delays in processing your withdrawal."
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: "kyc",
+                question: "KYC & Account Related 🆔",
+                answer: "Facing issues with KYC or identity verification?",
+                subQuestions: [
 
                     {
-                            id: "how_to_kyc",
-                            question: "How to complete KYC?",
-                            answer: "Go to Profile > KYC Section > Upload Aadhaar front and back, and enter the correct details. Once verified, you can withdraw."
-                        },
-                        {
-                            id: "kyc_pending_status",
-                            question: "My KYC is showing as pending",
-                            answer: "KYC verification usually takes 24–48 hours. If it has been longer, please contact our support team with your submitted document screenshots."
-                        },
-                        {
-                            id: "kyc_stuck_verification",
-                            question: "KYC submitted but not verified",
-                            answer: "KYC checks usually take 24–48 hours. If it’s been longer, please re-upload documents or contact support."
-                        },
-                        
-                        {
-                            id: "kyc_required",
-                            question: "Is KYC mandatory for withdrawals?",
-                            answer: "Yes. Completing KYC is compulsory before you can withdraw any amount. It ensures user identity verification and fraud prevention."
-                        },
-                       
-                        {
-                            id: "kyc_document_rejected",
-                            question: "My submitted documents were rejected",
-                            answer: "Ensure your documents are valid (like Aadhaar, PAN, or Voter ID) and clearly visible with matching name and DOB. You can resubmit via the KYC section."
-                        },
-                        {
-                            id: "fake_doc_warning",
-                            question: "Used someone else’s documents by mistake",
-                            answer: "Using others’ documents is against our policy and Indian law. It may lead to account suspension and possible legal action."
-                        }
-                        // {
-                        //     id: "suspension_reason",
-                        //     question: "Why was my account suspended?",
-                        //     answer: "Accounts are suspended if they violate our fair usage policy — like submitting fake documents, abusive behavior, or suspicious transactions."
-                        // },
-                        // 
+                        id: "how_to_kyc",
+                        question: "How to complete KYC?",
+                        answer: "Go to Profile > KYC Section > Upload Aadhaar front and back, and enter the correct details. Once verified, you can withdraw."
+                    },
+                    {
+                        id: "kyc_pending_status",
+                        question: "My KYC is showing as pending",
+                        answer: "KYC verification usually takes 24–48 hours. If it has been longer, please contact our support team with your submitted document screenshots."
+                    },
+                    {
+                        id: "kyc_stuck_verification",
+                        question: "KYC submitted but not verified",
+                        answer: "KYC checks usually take 24–48 hours. If it’s been longer, please re-upload documents or contact support."
+                    },
+
+                    {
+                        id: "kyc_required",
+                        question: "Is KYC mandatory for withdrawals?",
+                        answer: "Yes. Completing KYC is compulsory before you can withdraw any amount. It ensures user identity verification and fraud prevention."
+                    },
+
+                    {
+                        id: "kyc_document_rejected",
+                        question: "My submitted documents were rejected",
+                        answer: "Ensure your documents are valid (like Aadhaar, PAN, or Voter ID) and clearly visible with matching name and DOB. You can resubmit via the KYC section."
+                    },
+                    {
+                        id: "fake_doc_warning",
+                        question: "Used someone else’s documents by mistake",
+                        answer: "Using others’ documents is against our policy and Indian law. It may lead to account suspension and possible legal action."
+                    }
+                    // {
+                    //     id: "suspension_reason",
+                    //     question: "Why was my account suspended?",
+                    //     answer: "Accounts are suspended if they violate our fair usage policy — like submitting fake documents, abusive behavior, or suspicious transactions."
+                    // },
+                    // 
                     //    {
-                        //     id: "appeal_suspension",
-                        //     question: "Can I appeal or recover my account?",
-                        //     answer: "You may appeal by emailing support with a valid reason and proof. Our team will review and respond within 3–5 working days."
-                        // }, {
-                        //     id: "repeated_violation",
-                        //     question: "I created a second account with the same email",
-                        //     answer: "This is not allowed as per policy. We only allow one verified account per user. All duplicate accounts are subject to suspension."
-                        // }
-                    ]
-                },
-                {
-                    id: "game_rules",
-                    question: "Quiz, Battle & Game Related 📜",
-                    answer: "Confused about scoring, penalties or gameplay rules?",
-                    subQuestions: [
+                    //     id: "appeal_suspension",
+                    //     question: "Can I appeal or recover my account?",
+                    //     answer: "You may appeal by emailing support with a valid reason and proof. Our team will review and respond within 3–5 working days."
+                    // }, {
+                    //     id: "repeated_violation",
+                    //     question: "I created a second account with the same email",
+                    //     answer: "This is not allowed as per policy. We only allow one verified account per user. All duplicate accounts are subject to suspension."
+                    // }
+                ]
+            },
+            {
+                id: "game_rules",
+                question: "Quiz, Battle & Game Related 📜",
+                answer: "Confused about scoring, penalties or gameplay rules?",
+                subQuestions: [
                     {
-                            id: "match_pending",
-                            question: "Battle result still pending",
-                            answer: "This usually means your opponent hasn't finished the game yet. Please wait a few minutes and refresh your results."
-                        },
-                        {
-                            id: "match_stuck",
-                            question: "Match stuck at waiting for result",
-                            answer: "If it's stuck for over 2 hours, it's likely an opponent left the game. Contact support to check the status."
-                        },
-                
-                        {
-                            id: "rules_before_start",
-                            question: "Where can I check rules before joining a match?",
-                            answer: "Before joining any contest, you can tap on the ‘i’ icon or Rules tab beside the entry fee."
-                        },
-                        {
-                            id: "wrong_answer_penalty",
-                            question: "Why was my reward less even after answering correctly?",
-                            answer: "There might be a penalty if you answered one or more incorrectly or skipped a question. Each contest shows its penalty rules."
-                        },
-            
-                        {
-                            id: "rules_confusion",
-                            question: "I don’t understand how battle scoring works",
-                            answer: "Scoring rules vary per game and are shown before the match begins. Tap on the (i) icon in battle lobby to read them."
-                        }
-                    ]
-                }
-            ];
+                        id: "match_pending",
+                        question: "Battle result still pending",
+                        answer: "This usually means your opponent hasn't finished the game yet. Please wait a few minutes and refresh your results."
+                    },
+                    {
+                        id: "match_stuck",
+                        question: "Match stuck at waiting for result",
+                        answer: "If it's stuck for over 2 hours, it's likely an opponent left the game. Contact support to check the status."
+                    },
 
+                    {
+                        id: "rules_before_start",
+                        question: "Where can I check rules before joining a match?",
+                        answer: "Before joining any contest, you can tap on the ‘i’ icon or Rules tab beside the entry fee."
+                    },
+                    {
+                        id: "wrong_answer_penalty",
+                        question: "Why was my reward less even after answering correctly?",
+                        answer: "There might be a penalty if you answered one or more incorrectly or skipped a question. Each contest shows its penalty rules."
+                    },
+
+                    {
+                        id: "rules_confusion",
+                        question: "I don’t understand how battle scoring works",
+                        answer: "Scoring rules vary per game and are shown before the match begins. Tap on the (i) icon in battle lobby to read them."
+                    }
+                ]
+            }
+        ];
+
+     
+
+        
         function showTyping(callback) {
             const typing = document.createElement("div");
             typing.className = "typing-indicator";
@@ -427,11 +471,204 @@
             chatBody.appendChild(optionWrapper);
             chatBody.scrollTop = chatBody.scrollHeight;
         }
+            // const wrapper = document.createElement("div");
+            // wrapper.className = "option-buttons";
 
+            // options.forEach(opt => {
+            //     const btn = document.createElement("button");
+            //     btn.className = "option-btn";
+            //     btn.innerText = opt.question;
+            //     btn.onclick = () => {
+            //         appendMessage(opt.question, 'user');
+            //         wrapper.remove();
+            //         showSubQuestions(opt, []);
+            //     };
+            //     wrapper.appendChild(btn);
+            // });
 
+            // chatBody.appendChild(wrapper);
+
+        // function showSubQuestions(option, history = []) {
+
+        function showSubQuestions(option, history = []) {
+            if (option !== currentOption) {
+                historyStack.push(currentOption);
+            }
+            currentOption = option;
+
+                if (!option.subQuestions || option.subQuestions.length === 0) {
+                    showSubSupport();
+                    return;
+                }
+
+                const subWrapper = document.createElement("div");
+                subWrapper.className = "option-buttons";
+
+                option.subQuestions.forEach(sub => {
+                    const btn = document.createElement("button");
+                    btn.className = "option-btn";
+                    btn.innerText = sub.question;
+
+                    btn.onclick = () => {
+                        appendMessage(sub.question, 'user');
+                        subWrapper.remove();
+                        navWrapper.remove();
+
+                        if (sub.subQuestions && sub.subQuestions.length > 0) {
+                            showSubQuestions(sub, [ ...history, option ]);
+                            return;
+                        }
+
+                        showTyping(() => {
+                            appendMessage(sub.answer, 'bot');
+
+                            if (sub.id === "payment_failed") {
+                                const followUpWrapper = document.createElement("div");
+                                followUpWrapper.className = "option-buttons";
+
+                                const reverifyBtn = document.createElement("button");
+                                reverifyBtn.className = "option-btn";
+                                reverifyBtn.innerText = "🔄 Re-Verify Now";
+                                reverifyBtn.onclick = () => {
+                                    appendMessage("Re-Verify Now", 'user');
+                                    followUpWrapper.remove();
+                                    window.open("https://www.proquz.in/verify-payment", "_blank");
+                                };
+
+                                const uploadProofBtn = document.createElement("button");
+                                uploadProofBtn.className = "option-btn";
+                                uploadProofBtn.innerText = "📤 Upload Payment Screenshot";
+                                uploadProofBtn.onclick = () => {
+                                    appendMessage("Uploading payment screenshot", 'user');
+                                    followUpWrapper.remove();
+                                    showTyping(() => {
+                                        appendMessage("Please go to Wallet > Verify Payment, enter your UPI details and upload the correct screenshot for manual review. Make sure it includes UPI ID, amount, date & time.", 'bot');
+                                        showSubSupport();
+                                    });
+                                };
+
+                                followUpWrapper.appendChild(reverifyBtn);
+                                followUpWrapper.appendChild(uploadProofBtn);
+                                chatBody.appendChild(followUpWrapper);
+                                chatBody.scrollTop = chatBody.scrollHeight;
+                                return;
+                            }
+
+                            if (sub.id === "payment_not_reflected") {
+                                const followUpWrapper = document.createElement("div");
+                                followUpWrapper.className = "option-buttons";
+
+                                const after10MinBtn = document.createElement("button");
+                                after10MinBtn.className = "option-btn";
+                                after10MinBtn.innerText = "🕐 Yes, it's been more than 10 minutes";
+                                after10MinBtn.onclick = () => {
+                                    appendMessage("Yes, it's been more than 10 minutes", 'user');
+                                    followUpWrapper.remove();
+                                    showTyping(() => {
+                                        appendMessage(
+                                            "We sincerely apologize that your deposit has still not been verified even after 10 minutes.\n\n🙏 Please tap the 'Re-Verify Payment' button and submit correct details.\n\n⚠️ Don’t upload fake screenshots or QR codes.\n✅ Only upload genuine proof with UPI ID, amount, and date.\n\nThanks for your cooperation!",
+                                            'bot'
+                                        );
+
+                                        const reverifyLink = document.createElement("a");
+                                        reverifyLink.href = "https://www.google.com"; // Replace later
+                                        reverifyLink.target = "_blank";
+
+                                        const reverifyBtn = document.createElement("button");
+                                        reverifyBtn.className = "live-agent-btn";
+                                        reverifyBtn.innerText = "🔄 Re-Verify Payment";
+
+                                        reverifyLink.appendChild(reverifyBtn);
+                                        chatBody.appendChild(reverifyLink);
+                                        chatBody.scrollTop = chatBody.scrollHeight;
+
+                                        showSubSupport();
+                                    });
+                                };
+
+                                const waitBtn = document.createElement("button");
+                                waitBtn.className = "option-btn";
+                                waitBtn.innerText = "✅ Got it, I’ll wait a bit more";
+                                waitBtn.onclick = () => {
+                                    appendMessage("Got it, I’ll wait a bit more", 'user');
+                                    followUpWrapper.remove();
+                                    showTyping(() => {
+                                        appendMessage("No problem! Most UPI deposits reflect within 5–10 minutes. You may return if it still doesn't show.", 'bot');
+                                        showOptions();
+                                    });
+                                };
+
+                                followUpWrapper.appendChild(after10MinBtn);
+                                followUpWrapper.appendChild(waitBtn);
+                                chatBody.appendChild(followUpWrapper);
+                                chatBody.scrollTop = chatBody.scrollHeight;
+                                return;
+                            }
+
+                            if (sub.followUpButtons) {
+                                const followUpWrapper = document.createElement("div");
+                                followUpWrapper.className = "option-buttons";
+
+                                sub.followUpButtons.forEach(btn => {
+                                    const a = document.createElement("a");
+                                    a.href = btn.link;
+                                    a.target = "_blank";
+
+                                    const button = document.createElement("button");
+                                    button.className = "live-agent-btn";
+                                    button.innerText = btn.text;
+
+                                    a.appendChild(button);
+                                    followUpWrapper.appendChild(a);
+                                });
+
+                                chatBody.appendChild(followUpWrapper);
+                                chatBody.scrollTop = chatBody.scrollHeight;
+                                return;
+                            }
+
+                            showSubSupport();
+                        });
+                    };
+
+                    subWrapper.appendChild(btn);
+                });
+
+                const navWrapper = document.createElement("div");
+                navWrapper.className = "option-buttons";
+
+                // // 🔙 Back button
+                // if (history.length > 0) {
+                //     const backBtn = document.createElement("button");
+                //     backBtn.className = "option-btn";
+                //     backBtn.innerText = "🔙 Back";
+                //     backBtn.onclick = () => {
+                //         subWrapper.remove();
+                //         navWrapper.remove();
+                //         showSubQuestions(history[ history.length - 1 ], history.slice(0, -1));
+                //     };
+                //     navWrapper.appendChild(backBtn);
+                // }
+
+                // // 🏠 Menu button
+                // const menuBtn = document.createElement("button");
+                // menuBtn.className = "option-btn";
+                // menuBtn.innerText = "🏠 Main Menu";
+                // menuBtn.onclick = () => {
+                //     subWrapper.remove();
+                //     navWrapper.remove();
+                //     showOptions();
+                // };
+                // navWrapper.appendChild(menuBtn);
+
+                chatBody.appendChild(subWrapper);
+                chatBody.appendChild(navWrapper);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+
+        //     historyStack = [ ...history ];  // 👈 Save current history globally
+        //     currentOption = option; 
         
-
-        // function showSubQuestions(option) {
         //     if (!option.subQuestions || option.subQuestions.length === 0) {
         //         showSubSupport();
         //         return;
@@ -448,10 +685,17 @@
         //         btn.onclick = () => {
         //             appendMessage(sub.question, 'user');
         //             subWrapper.remove();
+
+        //             // ✅ Recursive support for nested sub-questions
+        //             if (sub.subQuestions && sub.subQuestions.length > 0) {
+        //                 showSubQuestions(sub, [ ...history, option ]); // 🧠 pass updated history stack
+        //                 return;
+        //             }
+
         //             showTyping(() => {
         //                 appendMessage(sub.answer, 'bot');
 
-        //                 // ✅ Handle custom buttons for follow-up
+        //                 // 🔁 Follow-up logic (your original handlers)
         //                 if (sub.id === "payment_failed") {
         //                     const followUpWrapper = document.createElement("div");
         //                     followUpWrapper.className = "option-buttons";
@@ -535,7 +779,7 @@
         //                     return;
         //                 }
 
-        //                 // ✅ Generic follow-up buttons (like refund buttons)
+        //                 // ✅ Generic follow-up buttons
         //                 if (sub.followUpButtons) {
         //                     const followUpWrapper = document.createElement("div");
         //                     followUpWrapper.className = "option-buttons";
@@ -558,7 +802,7 @@
         //                     return;
         //                 }
 
-        //                 // Default support fallback
+        //                 // Default fallback
         //                 showSubSupport();
         //             });
         //         };
@@ -566,184 +810,36 @@
         //         subWrapper.appendChild(btn);
         //     });
 
+        //     // // 🔙 Back & 🏠 Menu Buttons
+        //     const navWrapper = document.createElement("div");
+        //     navWrapper.className = "option-buttons";
+
+        //     // if (history.length > 0) {
+        //     //     const backBtn = document.createElement("button");
+        //     //     backBtn.className = "option-btn";
+        //     //     backBtn.innerText = "🔙 Back";
+        //     //     backBtn.onclick = () => {
+        //     //         subWrapper.remove();
+        //     //         showSubQuestions(history[ history.length - 1 ], history.slice(0, -1));
+        //     //     };
+        //     //     navWrapper.appendChild(backBtn);
+        //     // }
+
+        //     // const menuBtn = document.createElement("button");
+        //     // menuBtn.className = "option-btn";
+        //     // menuBtn.innerText = "🏠 Main Menu";
+        //     // menuBtn.onclick = () => {
+        //     //     subWrapper.remove();
+        //     //     navWrapper.remove();
+        //     //     showOptions();
+        //     // };
+
+        //     navWrapper.appendChild(menuBtn);
+
         //     chatBody.appendChild(subWrapper);
+        //     chatBody.appendChild(navWrapper);
         //     chatBody.scrollTop = chatBody.scrollHeight;
         // }
-        function showSubQuestions(option, history = []) {
-            document.querySelectorAll(".option-buttons").forEach(el => el.remove());
-
-            
-                if (!option.subQuestions || option.subQuestions.length === 0) {
-                    showSubSupport();
-                    return;
-                }
-
-                const subWrapper = document.createElement("div");
-                subWrapper.className = "option-buttons";
-
-                option.subQuestions.forEach(sub => {
-                    const btn = document.createElement("button");
-                    btn.className = "option-btn";
-                    btn.innerText = sub.question;
-
-                    btn.onclick = () => {
-                        appendMessage(sub.question, 'user');
-                        subWrapper.remove();
-
-                        // ✅ Recursive support for nested sub-questions
-                        if (sub.subQuestions && sub.subQuestions.length > 0) {
-                            showSubQuestions(sub, [ ...history, option ]); // 🧠 pass updated history stack
-                            return;
-                        }
-
-                        showTyping(() => {
-                            appendMessage(sub.answer, 'bot');
-
-                            // 🔁 Follow-up logic (your original handlers)
-                            if (sub.id === "payment_failed") {
-                                const followUpWrapper = document.createElement("div");
-                                followUpWrapper.className = "option-buttons";
-
-                                const reverifyBtn = document.createElement("button");
-                                reverifyBtn.className = "option-btn";
-                                reverifyBtn.innerText = "🔄 Re-Verify Now";
-                                reverifyBtn.onclick = () => {
-                                    appendMessage("Re-Verify Now", 'user');
-                                    followUpWrapper.remove();
-                                    window.open("https://www.proquz.in/verify-payment", "_blank");
-                                };
-
-                                const uploadProofBtn = document.createElement("button");
-                                uploadProofBtn.className = "option-btn";
-                                uploadProofBtn.innerText = "📤 Upload Payment Screenshot";
-                                uploadProofBtn.onclick = () => {
-                                    appendMessage("Uploading payment screenshot", 'user');
-                                    followUpWrapper.remove();
-                                    showTyping(() => {
-                                        appendMessage("Please go to Wallet > Verify Payment, enter your UPI details and upload the correct screenshot for manual review. Make sure it includes UPI ID, amount, date & time.", 'bot');
-                                        showSubSupport();
-                                    });
-                                };
-
-                                followUpWrapper.appendChild(reverifyBtn);
-                                followUpWrapper.appendChild(uploadProofBtn);
-                                chatBody.appendChild(followUpWrapper);
-                                chatBody.scrollTop = chatBody.scrollHeight;
-                                return;
-                            }
-
-                            if (sub.id === "payment_not_reflected") {
-                                const followUpWrapper = document.createElement("div");
-                                followUpWrapper.className = "option-buttons";
-
-                                const after10MinBtn = document.createElement("button");
-                                after10MinBtn.className = "option-btn";
-                                after10MinBtn.innerText = "🕐 Yes, it's been more than 10 minutes";
-                                after10MinBtn.onclick = () => {
-                                    appendMessage("Yes, it's been more than 10 minutes", 'user');
-                                    followUpWrapper.remove();
-                                    showTyping(() => {
-                                        appendMessage(
-                                            "We sincerely apologize that your deposit has still not been verified even after 10 minutes.\n\n🙏 Please tap the 'Re-Verify Payment' button and submit correct details.\n\n⚠️ Don’t upload fake screenshots or QR codes.\n✅ Only upload genuine proof with UPI ID, amount, and date.\n\nThanks for your cooperation!",
-                                            'bot'
-                                        );
-
-                                        const reverifyLink = document.createElement("a");
-                                        reverifyLink.href = "https://www.google.com"; // Replace with actual link
-                                        reverifyLink.target = "_blank";
-
-                                        const reverifyBtn = document.createElement("button");
-                                        reverifyBtn.className = "live-agent-btn";
-                                        reverifyBtn.innerText = "🔄 Re-Verify Payment";
-
-                                        reverifyLink.appendChild(reverifyBtn);
-                                        chatBody.appendChild(reverifyLink);
-                                        chatBody.scrollTop = chatBody.scrollHeight;
-
-                                        showSubSupport();
-                                    });
-                                };
-
-                                const waitBtn = document.createElement("button");
-                                waitBtn.className = "option-btn";
-                                waitBtn.innerText = "✅ Got it, I’ll wait a bit more";
-                                waitBtn.onclick = () => {
-                                    appendMessage("Got it, I’ll wait a bit more", 'user');
-                                    followUpWrapper.remove();
-                                    showTyping(() => {
-                                        appendMessage("No problem! Most UPI deposits reflect within 5–10 minutes. You may return if it still doesn't show.", 'bot');
-                                        showOptions();
-                                    });
-                                };
-
-                                followUpWrapper.appendChild(after10MinBtn);
-                                followUpWrapper.appendChild(waitBtn);
-                                chatBody.appendChild(followUpWrapper);
-                                chatBody.scrollTop = chatBody.scrollHeight;
-                                return;
-                            }
-
-                            // ✅ Generic follow-up buttons
-                            if (sub.followUpButtons) {
-                                const followUpWrapper = document.createElement("div");
-                                followUpWrapper.className = "option-buttons";
-
-                                sub.followUpButtons.forEach(btn => {
-                                    const a = document.createElement("a");
-                                    a.href = btn.link;
-                                    a.target = "_blank";
-
-                                    const button = document.createElement("button");
-                                    button.className = "live-agent-btn";
-                                    button.innerText = btn.text;
-
-                                    a.appendChild(button);
-                                    followUpWrapper.appendChild(a);
-                                });
-
-                                chatBody.appendChild(followUpWrapper);
-                                chatBody.scrollTop = chatBody.scrollHeight;
-                                return;
-                            }
-
-                            // Default fallback
-                            showSubSupport();
-                        });
-                    };
-
-                    subWrapper.appendChild(btn);
-                });
-
-                // 🔙 Back & 🏠 Menu Buttons
-                const navWrapper = document.createElement("div");
-                navWrapper.className = "option-buttons";
-
-                if (history.length > 0) {
-                    const backBtn = document.createElement("button");
-                    backBtn.className = "option-btn";
-                    backBtn.innerText = "🔙 Back";
-                    backBtn.onclick = () => {
-                        subWrapper.remove();
-                        showSubQuestions(history[ history.length - 1 ], history.slice(0, -1));
-                    };
-                    navWrapper.appendChild(backBtn);
-                }
-
-                const menuBtn = document.createElement("button");
-                menuBtn.className = "option-btn";
-                menuBtn.innerText = "🏠 Main Menu";
-                menuBtn.onclick = () => {
-                    subWrapper.remove();
-                    navWrapper.remove();
-                    showOptions();
-                };
-
-                navWrapper.appendChild(menuBtn);
-
-                chatBody.appendChild(subWrapper);
-                chatBody.appendChild(navWrapper);
-                chatBody.scrollTop = chatBody.scrollHeight;
-            }
 
         function showSubSupport() {
             showTyping(() => {
@@ -819,6 +915,20 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             });
         }
+
+        // Persistent Back/Menu buttons
+            document.getElementById("backBtn").onclick = () => {
+                if (historyStack.length > 0) {
+                    const lastOption = historyStack.pop();  // ✅ Step back
+                    showSubQuestions(lastOption);
+                } else {
+                    showOptions();  // Go to main menu if history is empty
+                }
+            };
+
+document.getElementById("menuBtn").onclick = () => {
+    showOptions();
+};
 
         window.onload = showIntro;
 
