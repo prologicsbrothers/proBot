@@ -69,20 +69,21 @@
         }
 
         .chat-message {
-            max-width: 70%;
-            padding: 14px 16px;
-            border-radius: 16px;
-            font-size: 14.5px;
-            line-height: 1.5;
-            animation: fadeIn 0.25s ease-in-out;
-        }
+    max-width: 70%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    animation: fadeIn 0.25s ease-in-out;
+}
 
-        .bot-message {
-            align-self: flex-start;
-            background-color: #fff;
-            color: #111;
-            border-bottom-left-radius: 0;
-        }
+.bot-message {
+    align-self: flex-start;
+    background-color: #fff;
+    color: #111;
+    border-bottom-left-radius: 0;
+    max-width: 85%; /* ✅ Increased bot message width */
+}
 
         .user-message {
             align-self: flex-end;
@@ -207,64 +208,7 @@
         const chatBody = document.getElementById("chat-body");
 
         const options = [
-                {
-                    id: "refund",
-                    question: "Need a Refund? 💵",
-                    answer: "We’re here to help with refund-related queries. Please choose your question below:",
-                    subQuestions: [
-                    {
-                            id: "how_to_request_refund",
-                            question: "How to request a refund?",
-                            answer: "To claim a refund, please click the **‘Claim Refund’** button below.\n\nYou’ll be redirected to a form where you’ll need to fill in:\n- Registered Email\n- Phone Number\n- Full Name\n- Payment Screenshot\n- Reason for refund\n\n✅ Once submitted, your request is sent to our billing team for review.",
-                            followUpButtons: [
-                                {
-                                    text: "📝 Claim Refund",
-                                    link: "https://www.google.com"
-                                }
-                            ]
-                        },
-                        {
-                            id: "refund_contact_support",
-                            question: "Still need help with refund?",
-                            answer: "No worries! Our team is here for you.\n\nClick below to contact us. Keep your payment screenshot and registered details ready for faster help.",
-                            followUpButtons: [
-                                {
-                                    text: "💬 Chat on Telegram",
-                                    link: "https://t.me/proquz_support"
-                                },
-                                {
-                                    text: "📧 Email Support",
-                                    link: "mailto:support@proquz.in"
-                                }
-                            ]
-                        },
-                        {
-                            id: "refund_vs_withdraw",
-                            question: "Refund or withdraw winnings?",
-                            answer: "💰 **Refund** is only for unused deposited amount.\n🏆 **Withdrawal** is for winnings that you’ve earned and want to transfer to your UPI.\n\nIf you haven’t played any match, you can opt for a refund.\nOtherwise, it's better to request a withdrawal."
-                        },
-                        {
-                            id: "refund_eligibility",
-                            question: "When am I eligible for a refund?",
-                            answer: "You are eligible for a refund if:\n\n1️⃣ No withdrawal has been made from your account\n2️⃣ Your deposited amount has not been used in any contest or battle\n\n❌ Bonus amounts and winnings are not eligible for refund."
-                        },
-                       
-            
-                        {
-                            id: "refund_status_check",
-                            question: "How can I check the status of my refund?",
-                            answer: "After submitting a refund request, you will receive a confirmation email.\n\nThe email will include:\n- Estimated time of refund\n- Refund eligibility details\n- How our billing team will process it\n\n📄 You may also read our official Refund Policy:",
-                            followUpButtons: [
-                                {
-                                    text: "📄 View Refund Policy",
-                                    link: "https://www.proquz.in/terms-and-conditions"
-                                }
-                            ]
-                        }
-                       
-            
-                    ]
-                },
+              
                 {
                     id: "deposit_withdraw",
                     question: "Withdrawal & Deposit 💰",
